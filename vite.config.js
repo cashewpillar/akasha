@@ -16,8 +16,8 @@ export default defineConfig({
         name: 'Akasha',
         short_name: 'Akasha',
         description: 'All that was, is, and will be',
-        theme_color: '#0a0a0f',
-        background_color: '#0a0a0f',
+        theme_color: '#f7f6f2',
+        background_color: '#f7f6f2',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
@@ -45,5 +45,10 @@ export default defineConfig({
       '@shared': resolve(__dirname, 'shared'),
       '@apps': resolve(__dirname, 'apps')
     }
+  },
+
+  server: {
+    port: 4000,
+    strictPort: true
   }
 })

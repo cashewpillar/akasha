@@ -1,8 +1,8 @@
 # Akasha
 
 Because the below things are such a bottleneck:
-1. Table builder UI (a catch-all without any specific use-case)
-2. Vanila HTML prototypes (then migration when grown)
+1. Table builder UI - a catch-all without any specific use-case, i don't find useful (duh)
+2. Vanila HTML prototypes - migrating to Vue when lots of features are done is a headache, and a time waste (manual tests wasted)
 
 ## Setup
 

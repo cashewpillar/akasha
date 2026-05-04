@@ -1,13 +1,13 @@
 import { createAppDb } from '@shared/db'
 
 export const db = createAppDb('stat-tracker', (db) => {
-  db.version(1).stores({
+  db.version(2).stores({
     // date: 'YYYY-MM-DD string (primary key per day)
-    // All daily stats are stored as one record per day
+    // All records are stored as one record per day
     days: 'date',
 
     // For counters that need individual timestamps (zone sessions, etc.)
-    events: '++id, date, type, createdAt'
+    events: '++id, [date+type], date, type, subtype, createdAt'
   })
 })
 
@@ -23,16 +23,18 @@ export async function getOrCreateDay(date = today()) {
 
   const fresh = {
     date,
-    // Negative habits (counters)
+    // Negative habits
     earPicking: 0,
+    nosePicking: 0,
+    beardPlucking: 0,
     unhealthyFood: 0,
+    hormonalActivity: 0,
     // Positive / zone sessions
     zone: 0,
     // Time tracking (stored as HH:MM strings)
     sleepTime: null,
     wakeTime: null,
     // Misc
-    hormonalActivity: 0,
     exploitedMinutes: 0,
     notes: ''
   }
@@ -48,7 +50,9 @@ export async function updateDay(date, patch) {
 }
 
 export async function incrementField(field, date = today(), delta = 1) {
-  const day = await getOrCreateDay(date)
-  const current = day[field] ?? 0
-  return updateDay(date, { [field]: Math.max(0, current + delta) })
+  await db.days.where(':id').equals(date).modify(d => {
+    const current = d[field] ?? 0
+    d[field] = Math.max(0, current + delta)
+  })
+  return db.days.get(date)
 }

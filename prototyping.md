@@ -200,9 +200,8 @@ db.version(1).stores({
 - Level = floor(xp / 50) + 1
 
 **Components:**
-- `Counter.vue` — reusable `+`/`−` tap counter
-  - Props: `label`, `glyph`, `value`, `type` ('bad' | 'good' | 'neutral')
-  - Emits: `increment`, `decrement`
+- `App.vue` — main container with grid-based tracking UI
+- Grid-based buttons for Negative Habits and Zone sessions
 
 ---
 

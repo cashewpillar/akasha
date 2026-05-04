@@ -10,21 +10,32 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:        #0a0a0f;
-  --surface:   #13131a;
-  --border:    #2a2a3a;
-  --text:      #e8e8f0;
-  --muted:     #6b6b80;
-  --accent:    #c8a96e;  /* aged gold */
+  --bg:        #f7f6f2;
+  --surface:   #ffffff;
+  --border:    rgba(0, 0, 0, 0.09);
+  --text:      #1a1a18;
+  --muted:     #6b6b67;
+  --accent:    #1a1a18;
   --danger:    #c0392b;
   --success:   #27ae60;
-  --font-mono: 'Courier New', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        #1a1a18;
+    --surface:   #232321;
+    --border:    rgba(255, 255, 255, 0.07);
+    --text:      #f0efe9;
+    --muted:     #a0a09b;
+    --accent:    #f0efe9;
+  }
 }
 
 html, body {
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
 }

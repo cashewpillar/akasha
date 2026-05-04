@@ -3,8 +3,8 @@
 
     <!-- Header -->
     <header class="header">
-      <router-link to="/" class="back">◀ AKASHA</router-link>
-      <h1>STAT TRACKER</h1>
+      <router-link to="/" class="back">◀ akasha</router-link>
+      <h1>stat tracker</h1>
       <span class="date-label">{{ displayDate }}</span>
     </header>
 
@@ -36,18 +36,18 @@
         <div class="sleep-duration" v-if="sleepDuration">{{ sleepDuration }}</div>
       </section>
 
-      <!-- ─── Counters ─── -->
+      <!-- ─── Negative Habits ─── -->
       <section class="stat-section">
-        <h2 class="section-title">📊 DAILY STATS</h2>
-        <div class="counters">
-          <Counter
-            v-for="stat in counters" :key="stat.key"
-            :label="stat.label"
-            :glyph="stat.glyph"
-            :value="day[stat.key]"
-            :type="stat.type"
-            @increment="increment(stat.key, 1)"
-            @decrement="increment(stat.key, -1)"
+        <h2 class="section-title">📉 NEGATIVE HABITS</h2>
+        <div class="habit-grid">
+          <GridButton
+            v-for="h in habitTypes" :key="h.key"
+            :label="h.label"
+            :glyph="h.glyph"
+            :count="day[h.key]"
+            :type="h.type"
+            @increment="increment(h.key, 1)"
+            @decrement="increment(h.key, -1)"
           />
         </div>
       </section>
@@ -57,15 +57,14 @@
         <h2 class="section-title">🌀 THE ZONE</h2>
         <p class="zone-sub">low-stimulation, body-present flow states</p>
         <div class="zone-grid">
-          <button
+          <GridButton
             v-for="z in zoneTypes" :key="z.key"
-            class="zone-btn"
-            @click="logZone(z.key)"
-          >
-            <span class="zone-glyph">{{ z.glyph }}</span>
-            <span class="zone-name">{{ z.label }}</span>
-            <span class="zone-count">{{ zoneCount(z.key) }}</span>
-          </button>
+            :label="z.label"
+            :glyph="z.glyph"
+            :count="zoneCount(z.key)"
+            @increment="logZone(z.key)"
+            @decrement="decrementZone(z.key)"
+          />
         </div>
       </section>
 
@@ -112,11 +111,12 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { db, today, getOrCreateDay, updateDay, incrementField } from './db.js'
 import { exportDb, importDb } from '@shared/db.js'
-import Counter from './components/Counter.vue'
+import GridButton from './components/GridButton.vue'
 
 // ─── State ────────────────────────────────────────────────
 const day = ref(null)
 const dateKey = ref(today())
+const zoneEvents = ref([])
 
 const displayDate = computed(() => {
   const d = new Date(dateKey.value + 'T00:00:00')
@@ -124,8 +124,20 @@ const displayDate = computed(() => {
 })
 
 onMounted(async () => {
-  day.value = await getOrCreateDay(dateKey.value)
+  try {
+    day.value = await getOrCreateDay(dateKey.value)
+    await refreshZoneEvents()
+  } catch (err) {
+    console.error('Failed to load data:', err)
+  }
 })
+
+async function refreshZoneEvents() {
+  zoneEvents.value = await db.events
+    .where('[date+type]')
+    .equals([dateKey.value, 'zone'])
+    .toArray()
+}
 
 async function save(patch) {
   day.value = await updateDay(dateKey.value, patch)
@@ -135,40 +147,49 @@ async function increment(field, delta) {
   day.value = await incrementField(field, dateKey.value, delta)
 }
 
-// ─── Counters config ──────────────────────────────────────
-const counters = [
-  { key: 'earPicking',       label: 'EAR PICKING',    glyph: '👂', type: 'bad'  },
-  { key: 'nosePicking',       label: 'NOSE PICKING',    glyph: '👃', type: 'bad'  },
-  { key: 'beardPlucking',       label: 'BEARD PLUCKING',    glyph: '🧔', type: 'bad'  },
-  { key: 'unhealthyFood',    label: 'JUNK FOOD',       glyph: '🍟', type: 'bad'  },
+// ─── Negative Habits config ───────────────────────────────
+const habitTypes = [
+  { key: 'earPicking',       label: 'EAR PICKING',    glyph: '🐚', type: 'bad', penalty: 3 },
+  { key: 'nosePicking',       label: 'NOSE PICKING',    glyph: '🍄', type: 'bad', penalty: 3 },
+  { key: 'beardPlucking',       label: 'BEARD PLUCKING',    glyph: '🌵', type: 'bad', penalty: 3 },
+  { key: 'unhealthyFood',    label: 'JUNK FOOD',       glyph: '🍟', type: 'bad', penalty: 5 },
   { key: 'hormonalActivity', label: 'HORMONAL',        glyph: '🔥', type: 'neutral' },
 ]
 
 // ─── Zone ─────────────────────────────────────────────────
 const zoneTypes = [
   { key: 'poop',        label: 'POOP',        glyph: '💩' },
-  { key: 'bath',        label: 'BATH/SHOWER',  glyph: '🚿' },
+  { key: 'bath',        label: 'BATH',  glyph: '🚿' },
   { key: 'dishes',      label: 'DISHES',       glyph: '🍽' },
   { key: 'teeth',       label: 'TOOTHBRUSH',   glyph: '🦷' },
   { key: 'stargaze',    label: 'STARGAZE',     glyph: '🌌' },
-  { key: 'mealprep',    label: 'MEAL PREP',    glyph: '🥘' },
+  { key: 'mealprep',    label: 'MEALPREP',    glyph: '🥘' },
   { key: 'walk',        label: 'WALK',         glyph: '🚶' },
   { key: 'stretch',     label: 'STRETCH',      glyph: '🧘' },
   { key: 'laundry',     label: 'LAUNDRY',      glyph: '👕' },
+  { key: 'shave',     label: 'SHAVE',      glyph: '🪞' },
 ]
-
-const zoneEvents = ref([])
-
-onMounted(async () => {
-  zoneEvents.value = await db.events.where({ date: dateKey.value, type: 'zone' }).toArray()
-})
 
 async function logZone(subtype) {
   const event = { date: dateKey.value, type: 'zone', subtype, createdAt: Date.now() }
   await db.events.add(event)
-  zoneEvents.value = await db.events.where({ date: dateKey.value, type: 'zone' }).toArray()
-  // Also increment total zone counter on day
+  await refreshZoneEvents()
   await increment('zone', 1)
+}
+
+async function decrementZone(subtype) {
+  // Fetch directly from DB to avoid race conditions with reactive state
+  const latest = await db.events
+    .where('[date+type]')
+    .equals([dateKey.value, 'zone'])
+    .filter(e => e.subtype === subtype)
+    .last()
+
+  if (latest) {
+    await db.events.delete(latest.id)
+    await refreshZoneEvents()
+    await increment('zone', -1)
+  }
 }
 
 function zoneCount(subtype) {
@@ -198,8 +219,11 @@ const xp = computed(() => {
     if (h >= 7 && h <= 9) score += 20
   }
   // Penalties
-  score -= (day.value.earPicking || 0) * 3
-  score -= (day.value.unhealthyFood || 0) * 5
+  habitTypes.forEach(h => {
+    if (h.type === 'bad') {
+      score -= (day.value[h.key] || 0) * (h.penalty || 3)
+    }
+  })
   return Math.max(0, Math.round(score))
 })
 
@@ -226,7 +250,7 @@ async function doImport(e) {
   try {
     await importDb(db, file, 'replace')
     day.value = await getOrCreateDay(dateKey.value)
-    zoneEvents.value = await db.events.where({ date: dateKey.value, type: 'zone' }).toArray()
+    await refreshZoneEvents()
     alert('Import successful.')
   } catch (err) {
     alert('Import failed: ' + err.message)
@@ -359,10 +383,11 @@ async function doImport(e) {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 1rem;
   padding: 0.4rem 0.6rem;
   width: 130px;
+  border-radius: 8px;
 }
 
 .sleep-duration {
@@ -372,11 +397,11 @@ async function doImport(e) {
   letter-spacing: 0.1em;
 }
 
-/* Counters */
-.counters {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+/* Habits */
+.habit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
 }
 
 /* Zone */
@@ -393,29 +418,6 @@ async function doImport(e) {
   gap: 0.5rem;
 }
 
-.zone-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.75rem 0.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-  font-family: var(--font-mono);
-}
-
-.zone-btn:active {
-  border-color: var(--accent);
-  background: #1a1a24;
-}
-
-.zone-glyph { font-size: 1.25rem; }
-.zone-name  { font-size: 0.55rem; letter-spacing: 0.05em; color: var(--muted); }
-.zone-count { font-size: 0.7rem; color: var(--accent); min-height: 1em; }
-
 /* Exploited time */
 .time-stepper {
   display: flex;
@@ -427,11 +429,12 @@ async function doImport(e) {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.8rem;
   padding: 0.5rem 0.85rem;
   cursor: pointer;
   letter-spacing: 0.05em;
+  border-radius: 8px;
 }
 
 .step-btn:active { border-color: var(--accent); }
@@ -449,11 +452,12 @@ async function doImport(e) {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.8rem;
   padding: 0.75rem;
   resize: vertical;
   line-height: 1.5;
+  border-radius: 12px;
 }
 
 .notes:focus { outline: 1px solid var(--accent); }
@@ -473,11 +477,12 @@ async function doImport(e) {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.7rem;
   letter-spacing: 0.15em;
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
+  border-radius: 12px;
 }
 
 .io-btn:hover { color: var(--accent); border-color: var(--accent); }
