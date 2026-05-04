@@ -138,6 +138,8 @@ async function increment(field, delta) {
 // ─── Counters config ──────────────────────────────────────
 const counters = [
   { key: 'earPicking',       label: 'EAR PICKING',    glyph: '👂', type: 'bad'  },
+  { key: 'nosePicking',       label: 'NOSE PICKING',    glyph: '👃', type: 'bad'  },
+  { key: 'beardPlucking',       label: 'BEARD PLUCKING',    glyph: '🧔', type: 'bad'  },
   { key: 'unhealthyFood',    label: 'JUNK FOOD',       glyph: '🍟', type: 'bad'  },
   { key: 'hormonalActivity', label: 'HORMONAL',        glyph: '🔥', type: 'neutral' },
 ]
